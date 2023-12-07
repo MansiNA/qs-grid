@@ -2,73 +2,183 @@ package de.dbuss.example.views;
 
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
-import com.vaadin.flow.component.html.Footer;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Header;
-import com.vaadin.flow.component.orderedlayout.Scroller;
-import com.vaadin.flow.component.sidenav.SideNav;
-import com.vaadin.flow.component.sidenav.SideNavItem;
-import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.HighlightConditions;
+import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import de.dbuss.example.data.entity.User;
+import de.dbuss.example.data.security.AuthenticatedUser;
+import de.dbuss.example.data.security.SecurityService;
 import de.dbuss.example.views.grid.GridView;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
-/**
- * The main view is a top-level placeholder for other views.
- */
+import java.util.Optional;
+
 public class MainLayout extends AppLayout {
 
-    private H2 viewTitle;
+    private AuthenticatedUser authenticatedUser;
+    boolean isAdmin =checkAdminRole();
+    boolean isUser =checkUserRole();
+    public MainLayout(AuthenticatedUser authenticatedUser){
+        this.authenticatedUser = authenticatedUser;
+        createHeader();
+        createDrawer();
 
-    public MainLayout() {
-        setPrimarySection(Section.DRAWER);
-        addDrawerContent();
-        addHeaderContent();
+        //isAdmin = checkAdminRole();
     }
 
-    private void addHeaderContent() {
-        DrawerToggle toggle = new DrawerToggle();
-        toggle.setAriaLabel("Menu toggle");
+    private void createHeader() {
+        H1 logo = new H1("QS-Grid");
+        logo.addClassNames("text-l","m-m");
 
-        viewTitle = new H2();
-        viewTitle.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUserName = authentication.getName();
 
-        addToNavbar(true, toggle, viewTitle);
+        Button logout = new Button("Log out " + currentUserName, e -> authenticatedUser.logout());
+
+        if (currentUserName=="anonymousUser")
+        {
+            logout.setVisible(false);
+        }
+        else
+        {
+            logout.setVisible(true);
+        }
+
+        if (isAdmin) {
+
+            System.out.println("Ein Admin ist angemeldet!");
+            // Benutzer ist ein Administrator
+            // Führen Sie hier den entsprechenden Code aus
+        } else {
+
+            System.out.println("Ein normaler User ist angemeldet!");
+            // Benutzer ist kein Administrator
+            // Führen Sie hier den entsprechenden Code aus
+        }
+
+      //  Image image = new Image("images/dataport.png", "Dataport Image");
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println("angemeldeter User: " + auth.getName());
+
+        HorizontalLayout header= new HorizontalLayout(new DrawerToggle(),logo, logout);
+
+        Span sp= new Span("V1.02");
+
+      //  header.add(image,sp);
+        header.add(sp);
+
+        header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
+        header.expand(logo);
+        header.setWidthFull();
+        header.addClassNames("py-0", "px-m");
+        addToNavbar(header);
     }
 
-    private void addDrawerContent() {
-        H1 appName = new H1("QS-Grid");
-        appName.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
-        Header header = new Header(appName);
+    private boolean checkAdminRole() {
 
-        Scroller scroller = new Scroller(createNavigation());
+        // Überprüfen, ob der angemeldete Benutzer zur Gruppe "Admin" gehört
 
-        addToDrawer(header, scroller, createFooter());
+        // Erhalten Sie den angemeldeten Benutzer
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // Überprüfen, ob der Benutzer authentifiziert ist und nicht anonym
+        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken)) {
+            Object principal = authentication.getPrincipal();
+
+            // Überprüfen, ob der angemeldete Benutzer ein UserDetails-Objekt ist
+            if (principal instanceof UserDetails) {
+                UserDetails userDetails = (UserDetails) principal;
+
+                // Überprüfen, ob der angemeldete Benutzer die Berechtigung "ROLE_ADMIN" hat
+                return userDetails.getAuthorities().stream()
+                        .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+
+            }
+        }
+
+        return false;
+
     }
 
-    private SideNav createNavigation() {
-        SideNav nav = new SideNav();
 
-        nav.addItem(new SideNavItem("Grid", GridView.class, LineAwesomeIcon.TH_SOLID.create()));
+    private boolean checkPFRole() {
 
-        return nav;
+        // Überprüfen, ob der angemeldete Benutzer zur Gruppe "Admin" gehört
+
+        // Erhalten Sie den angemeldeten Benutzer
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // Überprüfen, ob der Benutzer authentifiziert ist und nicht anonym
+        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken)) {
+            Object principal = authentication.getPrincipal();
+
+            // Überprüfen, ob der angemeldete Benutzer ein UserDetails-Objekt ist
+            if (principal instanceof UserDetails) {
+                UserDetails userDetails = (UserDetails) principal;
+
+                // Überprüfen, ob der angemeldete Benutzer die Berechtigung "ROLE_ADMIN" hat
+                return userDetails.getAuthorities().stream()
+                        .anyMatch(authority -> authority.getAuthority().equals("ROLE_PF_ADMIN"));
+
+            }
+        }
+
+        return false;
+
     }
 
-    private Footer createFooter() {
-        Footer layout = new Footer();
+    private boolean checkUserRole() {
 
-        return layout;
+        // Überprüfen, ob der angemeldete Benutzer zur Gruppe "Admin" gehört
+
+        // Erhalten Sie den angemeldeten Benutzer
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // Überprüfen, ob der Benutzer authentifiziert ist und nicht anonym
+        if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken)) {
+            Object principal = authentication.getPrincipal();
+
+            // Überprüfen, ob der angemeldete Benutzer ein UserDetails-Objekt ist
+            if (principal instanceof UserDetails) {
+                UserDetails userDetails = (UserDetails) principal;
+
+                // Überprüfen, ob der angemeldete Benutzer die Berechtigung "ROLE_ADMIN" hat
+                return userDetails.getAuthorities().stream()
+                        .anyMatch(authority -> authority.getAuthority().equals("ROLE_USER"));
+
+            }
+        }
+
+        return false;
+
     }
 
-    @Override
-    protected void afterNavigation() {
-        super.afterNavigation();
-        viewTitle.setText(getCurrentPageTitle());
-    }
+    private void createDrawer() {
 
-    private String getCurrentPageTitle() {
-        PageTitle title = getContent().getClass().getAnnotation(PageTitle.class);
-        return title == null ? "" : title.value();
+        RouterLink gridView = new RouterLink ("grid", GridView.class);
+        RouterLink link = new RouterLink("Login", LoginView.class);
+
+        Optional<User> maybeUser = authenticatedUser.get();
+        if (maybeUser.isPresent()) {
+            addToDrawer(new VerticalLayout(
+                    gridView
+            ));
+        } else
+        {
+            addToDrawer(new VerticalLayout(link));
+        }
     }
 }

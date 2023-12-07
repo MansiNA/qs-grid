@@ -20,7 +20,7 @@ import com.vaadin.flow.data.renderer.NumberRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.RouteAlias;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import de.dbuss.example.views.MainLayout;
 import java.text.NumberFormat;
 import java.time.LocalDate;
@@ -28,16 +28,18 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+
+import jakarta.annotation.security.RolesAllowed;
 import org.apache.commons.lang3.StringUtils;
 
 @PageTitle("Grid")
 @Route(value = "grid", layout = MainLayout.class)
-@RouteAlias(value = "", layout = MainLayout.class)
+@AnonymousAllowed
+//@RouteAlias(value = "", layout = MainLayout.class)
 public class GridView extends Div {
 
     private GridPro<Client> grid;
     private GridListDataView<Client> gridListDataView;
-
     private Grid.Column<Client> clientColumn;
     private Grid.Column<Client> amountColumn;
     private Grid.Column<Client> statusColumn;

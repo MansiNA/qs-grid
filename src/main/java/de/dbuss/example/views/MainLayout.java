@@ -1,29 +1,28 @@
 package de.dbuss.example.views;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.dependency.CssImport;
-import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.HighlightConditions;
 import com.vaadin.flow.router.RouterLink;
-import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.dbuss.example.data.entity.User;
 import de.dbuss.example.data.security.AuthenticatedUser;
-import de.dbuss.example.data.security.SecurityService;
 import de.dbuss.example.views.grid.GridView;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.vaadin.lineawesome.LineAwesomeIcon;
 
+import javax.naming.Context;
+import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import java.util.Hashtable;
 import java.util.Optional;
 
 public class MainLayout extends AppLayout {
@@ -104,7 +103,7 @@ public class MainLayout extends AppLayout {
 
                 // Überprüfen, ob der angemeldete Benutzer die Berechtigung "ROLE_ADMIN" hat
                 return userDetails.getAuthorities().stream()
-                        .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+                        .anyMatch(authority -> authority.getAuthority().equals("ADMIN"));
 
             }
         }
@@ -169,7 +168,8 @@ public class MainLayout extends AppLayout {
     private void createDrawer() {
 
         RouterLink gridView = new RouterLink ("grid", GridView.class);
-        RouterLink link = new RouterLink("Login", LoginView.class);
+        RouterLink link = new RouterLink("simple_login", LoginView.class);
+        Button linkLoginAd = new Button("login with ad", e -> navigateTo("/login"));
 
         Optional<User> maybeUser = authenticatedUser.get();
         if (maybeUser.isPresent()) {
@@ -178,7 +178,10 @@ public class MainLayout extends AppLayout {
             ));
         } else
         {
-            addToDrawer(new VerticalLayout(link));
+            addToDrawer(new VerticalLayout(link, linkLoginAd));
         }
+    }
+    private void navigateTo(String path) {
+        UI.getCurrent().navigate(path);
     }
 }

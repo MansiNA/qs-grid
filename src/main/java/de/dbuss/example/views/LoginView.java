@@ -14,7 +14,7 @@ import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import de.dbuss.example.data.security.AuthenticatedUser;
 
-@Route("login")
+@Route("simple_login")
 @PageTitle("Login | Qs-Admin")
 @AnonymousAllowed
 public class LoginView extends LoginOverlay implements BeforeEnterObserver {

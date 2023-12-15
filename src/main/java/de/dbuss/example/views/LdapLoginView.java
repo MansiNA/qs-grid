@@ -2,59 +2,65 @@ package de.dbuss.example.views;
 
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.login.AbstractLogin;
+import com.vaadin.flow.component.login.LoginI18n;
+import com.vaadin.flow.component.login.LoginOverlay;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.internal.RouteUtil;
+import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
+import de.dbuss.example.data.entity.User;
+import de.dbuss.example.data.security.AuthenticatedUser;
+import de.dbuss.example.data.service.UserService;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import java.util.Hashtable;
+import java.util.Optional;
 
 @Route("login")
 @AnonymousAllowed
 public class LdapLoginView extends VerticalLayout {
+    private final AuthenticatedUser authenticatedUser;
+    private final UserService userService;
 
-    private TextField usernameField;
-    private PasswordField passwordField;
+    public LdapLoginView(AuthenticatedUser authenticatedUser, UserService userService) {
+        this.authenticatedUser = authenticatedUser;
+        this.userService = userService;
 
-    public LdapLoginView() {
-        // Initialize UI components
-        usernameField = new TextField("Username");
-        passwordField = new PasswordField("Password");
-        Button loginButton = new Button("Login", this::login);
+
+        LoginOverlay loginOverlay = new LoginOverlay();
+        loginOverlay.setAction(RouteUtil.getRoutePath(VaadinService.getCurrent().getContext(), getClass()));
+
+        LoginI18n i18n = LoginI18n.createDefault();
+        i18n.setHeader(new LoginI18n.Header());
+        i18n.getHeader().setTitle("QS Grid...");
+        i18n.getHeader().setDescription("Login using mapping/mapping");
+        i18n.setAdditionalInformation(null);
+        loginOverlay.setI18n(i18n);
+
+        loginOverlay.setForgotPasswordButtonVisible(false);
+        loginOverlay.setOpened(true);
+
+        // Add a listener to handle login events
+        loginOverlay.addLoginListener(this::onLogin);
 
         // Add components to the layout
-        add(usernameField, passwordField, loginButton);
-    }
-
-    private void login(ClickEvent<Button> event) {
-        // Get username and password from the fields
-        String username = usernameField.getValue();
-        String password = passwordField.getValue();
-
-        // Attempt to connect to LDAP
-        boolean ldapConnectionSuccessful = connectToLdap(username, password);
-
-        // Show success or failure message
-        if (ldapConnectionSuccessful) {
-            Notification.show("Login successful", 3000, Notification.Position.MIDDLE);
-            // Redirect to the main page or perform other actions
-        } else {
-            Notification.show("Login failed. Please check your credentials.", 5000, Notification.Position.MIDDLE);
-        }
+        add(loginOverlay);
     }
 
     private boolean connectToLdap(String username, String password) {
         String ldapUrl = "ldap://viaginterkom.de:389";
-       // String ldapUser = "cn=" + username + ",ou=people,dc=viaginterkom,dc=de"; // Adjust the DN pattern
-
-        String ldapUser= username + "@viaginterkom.de";
-
+       // String ldapUser = "cn=" + username + ",ou=people,dc=viaginterkom,dc=de";
+        String ldapUser= username + "@viaginterkom.de"; //Adjust the DN pattern
         String ldapPassword = password;
 
         Hashtable<String, String> env = new Hashtable<>();
@@ -67,21 +73,34 @@ public class LdapLoginView extends VerticalLayout {
             // Attempt to create an initial context with the provided credentials
             DirContext context = new InitialDirContext(env);
 
-            // If the context is created successfully, the LDAP connection is successful
-
             // Close the context after use
             context.close();
-            System.out.println("User " + ldapUser + " connected");
+
             return true;
         } catch (NamingException e) {
             // Handle exceptions (e.g., authentication failure)
-
-            System.out.println("User " + ldapUser + " failed to connect!");
-            System.out.println("PWD: " + ldapPassword);
-
             e.printStackTrace();
             return false;
         }
 
     }
+    private void onLogin(AbstractLogin.LoginEvent event) {
+
+        String userName = event.getUsername();
+        String password = event.getPassword();
+
+        User user = userService.getUserByUsername(userName);
+      //  System.out.println(user.getName());
+        boolean isLoginSuccessful = false;
+
+        isLoginSuccessful = connectToLdap(userName, password);
+        // Show success or failure message
+        if (isLoginSuccessful) {
+            Notification.show("Login successful", 3000, Notification.Position.MIDDLE).addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        } else {
+            Notification.show("Login failed. Please check your credentials.", 5000, Notification.Position.MIDDLE).addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
+    }
+
+
 }

@@ -51,7 +51,10 @@ public class LdapLoginView extends VerticalLayout {
 
     private boolean connectToLdap(String username, String password) {
         String ldapUrl = "ldap://viaginterkom.de:389";
-        String ldapUser = "cn=" + username + ",ou=people,dc=viaginterkom,dc=de"; // Adjust the DN pattern
+       // String ldapUser = "cn=" + username + ",ou=people,dc=viaginterkom,dc=de"; // Adjust the DN pattern
+
+        String ldapUser= username + "@viaginterkom.de";
+
         String ldapPassword = password;
 
         Hashtable<String, String> env = new Hashtable<>();
@@ -68,10 +71,14 @@ public class LdapLoginView extends VerticalLayout {
 
             // Close the context after use
             context.close();
-
+            System.out.println("User " + ldapUser + " connected");
             return true;
         } catch (NamingException e) {
             // Handle exceptions (e.g., authentication failure)
+
+            System.out.println("User " + ldapUser + " failed to connect!");
+            System.out.println("PWD: " + ldapPassword);
+
             e.printStackTrace();
             return false;
         }

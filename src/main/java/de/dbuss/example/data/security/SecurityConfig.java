@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @EnableWebSecurity
@@ -22,12 +23,27 @@ public class SecurityConfig extends VaadinWebSecurity {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
-        http.authorizeHttpRequests().requestMatchers(new AntPathRequestMatcher("/images/*.png")).permitAll();
+        http
+          .authorizeHttpRequests()
+          .requestMatchers(new AntPathRequestMatcher("/images/*.png"))
+          .permitAll();
 
         // Icons from the line-awesome addon
         http.authorizeHttpRequests().requestMatchers(new AntPathRequestMatcher("/line-awesome/**/*.svg")).permitAll();
         super.configure(http);
         setLoginView(http, LoginView.class);
     }
+
+
+
+
+
+
+ /*   @Bean
+    JdbcUserDetailsManager user(){
+       // JdbcUserDetailsManager jdbcUserDetailsManager = new JdbcUserDetailsManager();
+
+        return null;
+    };*/
 
 }

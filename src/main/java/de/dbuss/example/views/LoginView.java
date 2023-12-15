@@ -105,6 +105,7 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
+
         // inform the user about an authentication error
         if(beforeEnterEvent.getLocation()
                 .getQueryParameters()

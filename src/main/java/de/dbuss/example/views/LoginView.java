@@ -55,7 +55,8 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
     }
     private boolean connectToLdap(String username, String password) {
         String ldapUrl = "ldap://viaginterkom.de:389";
-        String ldapUser = "cn=" + username + ",ou=people,dc=viaginterkom,dc=de"; // Adjust the DN pattern
+        // String ldapUser = "cn=" + username + ",ou=people,dc=viaginterkom,dc=de"; // Adjust the DN pattern
+        String ldapUser= username + "@viaginterkom.de";
         String ldapPassword = password;
 
         Hashtable<String, String> env = new Hashtable<>();

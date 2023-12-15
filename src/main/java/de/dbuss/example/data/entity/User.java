@@ -24,4 +24,5 @@ public class User extends AbstractEntity {
     @Lob
     @Column(length = 1000000)
     private byte[] profilePicture;
+    private int is_ad;
 }

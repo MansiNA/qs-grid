@@ -63,6 +63,10 @@ public class LdapLoginView extends VerticalLayout {
         String ldapUser= username + "@viaginterkom.de"; //Adjust the DN pattern
         String ldapPassword = password;
 
+        System.out.println("Anmelden User: " + ldapUser);
+        System.out.println("Password: " + ldapPassword);
+        System.out.println("URL: " + ldapUrl);
+
         Hashtable<String, String> env = new Hashtable<>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
         env.put(Context.PROVIDER_URL, ldapUrl);
@@ -89,15 +93,20 @@ public class LdapLoginView extends VerticalLayout {
         String userName = event.getUsername();
         String password = event.getPassword();
 
-        User user = userService.getUserByUsername(userName);
+     //   User user = userService.getUserByUsername(userName);
       //  System.out.println(user.getName());
         boolean isLoginSuccessful = false;
+
 
         isLoginSuccessful = connectToLdap(userName, password);
         // Show success or failure message
         if (isLoginSuccessful) {
+
+            System.out.println("Login successful...");
+
             Notification.show("Login successful", 3000, Notification.Position.MIDDLE).addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         } else {
+            System.out.println("Login failed!!!");
             Notification.show("Login failed. Please check your credentials.", 5000, Notification.Position.MIDDLE).addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }

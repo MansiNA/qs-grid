@@ -1,5 +1,6 @@
 package de.dbuss.example.views;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.login.AbstractLogin;
 import com.vaadin.flow.component.login.LoginForm;
@@ -30,6 +31,8 @@ import java.util.Optional;
 @PageTitle("Login | Qs-Admin")
 @AnonymousAllowed
 public class LoginView extends LoginOverlay implements BeforeEnterObserver {
+    UI ui = new UI();
+    private static final String LOGIN_SUCCESS_URL = "/";
     private final AuthenticatedUser authenticatedUser;
     private final UserService userService;
     private final LoginForm login = new LoginForm();
@@ -59,6 +62,11 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
         String ldapUser= username + "@viaginterkom.de";
         String ldapPassword = password;
 
+        System.out.println("Anmelden User: " + ldapUser);
+        System.out.println("Password: " + ldapPassword);
+        System.out.println("URL: " + ldapUrl);
+
+
         Hashtable<String, String> env = new Hashtable<>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
         env.put(Context.PROVIDER_URL, ldapUrl);
@@ -85,12 +93,31 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
         String userName = event.getUsername();
         String password = event.getPassword();
 
+        System.out.println("Anmeldeversuch von User:" + userName);
+        System.out.println("mit Passwort:" + password);
+
         User user = userService.getUserByUsername(userName);
         System.out.println(user.getName());
         boolean isLoginSuccessful = false;
         if(user.getIs_ad() == 1) {
+
+            System.out.println(user.getName() + " ist Active Directory User...");
+
             isLoginSuccessful = connectToLdap(userName, password);
+
+            if (isLoginSuccessful){
+                System.out.println("successfully login...");
+                ui.getCurrent().getPage().setLocation(LOGIN_SUCCESS_URL);
+            }
+            else {
+                login.setError(true);
+            }
+
+
+
         } else {
+
+            System.out.println(user.getName() + " normal User...");
             Optional<User> optionalUser = authenticatedUser.get();
             if(optionalUser.isPresent()) {
                 isLoginSuccessful = true;

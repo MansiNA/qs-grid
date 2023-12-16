@@ -22,8 +22,11 @@ public class AuthenticatedUser {
 
     @Transactional
     public Optional<User> get() {
-        return authenticationContext.getAuthenticatedUser(UserDetails.class)
-                .map(userDetails -> userRepository.findByUsername(userDetails.getUsername()));
+        Optional<User> user = Optional.of(new User());
+        user = authenticationContext.getAuthenticatedUser(UserDetails.class).map(userDetails -> userRepository.findByUsername(userDetails.getUsername()));
+
+
+        return user;
     }
 
     public void logout() {

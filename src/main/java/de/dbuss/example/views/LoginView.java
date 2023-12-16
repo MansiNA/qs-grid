@@ -83,14 +83,14 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
             System.out.println("Check User against AD is successfully...");
 
             return true;
-        } catch (NamingException e) {
+        } catch (Exception e) {
             // Handle exceptions (e.g., authentication failure)
             System.out.println("Check User against AD failed!!!");
-            System.out.println("Still act like it was successful");
-            return true;
+            //System.out.println("Still act like it was successful");
+            //return true;
 
-            //e.printStackTrace();
-            //return false;
+            e.printStackTrace();
+            return false;
         }
 
     }
@@ -113,6 +113,14 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
 
             if (isLoginSuccessful){
                 System.out.println("successfully login...");
+
+                User ad_user = new User();
+                ad_user.setName(userName);
+                ad_user.setIs_ad(1);
+                ad_user.setUsername("Michael Quaschny");
+
+                authenticatedUser.setUser(ad_user);
+
                 ui.getCurrent().getPage().setLocation(LOGIN_SUCCESS_URL);
             }
             else {

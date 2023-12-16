@@ -29,6 +29,7 @@ public class MainLayout extends AppLayout {
 
     private AuthenticatedUser authenticatedUser;
     boolean isAdmin =checkAdminRole();
+    Button logout;
     boolean isUser =checkUserRole();
     public MainLayout(AuthenticatedUser authenticatedUser){
         this.authenticatedUser = authenticatedUser;
@@ -45,7 +46,7 @@ public class MainLayout extends AppLayout {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUserName = authentication.getName();
 
-        Button logout = new Button("Log out " + currentUserName, e -> authenticatedUser.logout());
+        logout = new Button("Log out " + currentUserName, e -> authenticatedUser.logout());
 
         if (currentUserName=="anonymousUser")
         {
@@ -176,6 +177,9 @@ public class MainLayout extends AppLayout {
             addToDrawer(new VerticalLayout(
                     gridView
             ));
+
+            logout.setVisible(true);
+
         } else
         {
             addToDrawer(new VerticalLayout(link, linkLoginAd));

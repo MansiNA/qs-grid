@@ -57,9 +57,10 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
 
     }
     private boolean connectToLdap(String username, String password) {
-        String ldapUrl = "ldap://viaginterkom.de:389";
-        // String ldapUser = "cn=" + username + ",ou=people,dc=viaginterkom,dc=de"; // Adjust the DN pattern
-        String ldapUser= username + "@viaginterkom.de";
+        //String ldapUrl = "ldap://viaginterkom.de:389";
+        String ldapUrl = "ldap://fhhnet.stadt.hamburg.de:389";
+        //String ldapUser= username + "@viaginterkom.de";
+        String ldapUser= username + "@fhhnet.stadt.hamburg.de";
         String ldapPassword = password;
 
         System.out.println("Anmelden User: " + ldapUser);

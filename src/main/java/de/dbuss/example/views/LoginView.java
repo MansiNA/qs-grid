@@ -63,7 +63,10 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
 
         //String ldapUser= username + "@viaginterkom.de";
         //String ldapUser= username + "@fhhnet.stadt.hamburg.de";
-        String ldapUser= username + "@wimpi.net";
+//        String ldapUser= username + "@wimpi.net";
+
+         String ldapUser = "uid=" + username + ",ou=users,dc=wimpi,dc=net"; // Adjust the DN pattern
+
 
         String ldapPassword = password;
 
@@ -75,7 +78,9 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
         Hashtable<String, String> env = new Hashtable<>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
         env.put(Context.PROVIDER_URL, ldapUrl);
+        //env.put(Context.SECURITY_PRINCIPAL, ldapUser);
         env.put(Context.SECURITY_PRINCIPAL, ldapUser);
+
         env.put(Context.SECURITY_CREDENTIALS, ldapPassword);
 
         try {

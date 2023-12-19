@@ -127,7 +127,7 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
                 User ad_user = new User();
                 ad_user.setName(userName);
                 ad_user.setIs_ad(1);
-                ad_user.setUsername("Michael Quaschny");
+                ad_user.setUsername(user.getName());
 
                 authenticatedUser.setUser(ad_user);
 

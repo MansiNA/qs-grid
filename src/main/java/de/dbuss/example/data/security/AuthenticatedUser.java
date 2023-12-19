@@ -38,6 +38,15 @@ public class AuthenticatedUser {
         return user;
     }
 
+public String getUsername(){
+
+        if (logged_in_user == null)
+        {
+            return null;
+        }
+
+        return logged_in_user.getUsername();
+};
 
     @Transactional
     public void setUser(User logged_in_user) {
@@ -47,6 +56,7 @@ public class AuthenticatedUser {
 
     public void logout() {
         is_authenticated=false;
+        logged_in_user=null;
         authenticationContext.logout();
     }
 

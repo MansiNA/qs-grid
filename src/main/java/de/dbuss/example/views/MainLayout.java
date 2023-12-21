@@ -44,7 +44,15 @@ public class MainLayout extends AppLayout {
         logo.addClassNames("text-l","m-m");
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        //String currentUserName = authentication.getName();
         String currentUserName = authentication.getName();
+
+        Optional<User> maybeUser = authenticatedUser.get();
+        if (maybeUser.isPresent()) {
+            User user = maybeUser.get();
+            currentUserName=user.getName();
+        }
+
 
         logout = new Button("Log out " + currentUserName, e -> authenticatedUser.logout());
 

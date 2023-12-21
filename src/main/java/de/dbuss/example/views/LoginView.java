@@ -134,7 +134,8 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
                 System.out.println("successfully login...");
 
                 //Authentication request = new UsernamePasswordAuthenticationToken("admin", "$2a$10$jpLNVNeA7Ar/ZQ2DKbKCm.MuT2ESe.Qop96jipKMq7RaUgCoQedV.");
-                Authentication request = new UsernamePasswordAuthenticationToken(userName, "$2a$10$jpLNVNeA7Ar/ZQ2DKbKCm.MuT2ESe.Qop96jipKMq7RaUgCoQedV.");
+                //Authentication request = new UsernamePasswordAuthenticationToken(userName, "$2a$10$jpLNVNeA7Ar/ZQ2DKbKCm.MuT2ESe.Qop96jipKMq7RaUgCoQedV.");
+                Authentication request = new UsernamePasswordAuthenticationToken(userName, "");
                 Authentication result = authenticationProvider.authenticate(request);
                 SecurityContextHolder.getContext().setAuthentication(result);
 

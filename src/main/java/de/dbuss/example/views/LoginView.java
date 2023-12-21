@@ -124,12 +124,6 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
             if (isLoginSuccessful){
                 System.out.println("successfully login...");
 
-                User ad_user = new User();
-                ad_user.setName(userName);
-                ad_user.setIs_ad(1);
-                ad_user.setUsername(user.getName());
-
-                authenticatedUser.setUser(ad_user);
 
                 ui.getCurrent().getPage().setLocation(LOGIN_SUCCESS_URL);
             }

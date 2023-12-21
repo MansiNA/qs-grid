@@ -46,9 +46,11 @@ public class MainLayout extends AppLayout {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUserName = authentication.getName();
 
-        if (authenticatedUser.getUsername() != null){
+     /*   if (authenticatedUser.getUsername() != null){
             currentUserName=authenticatedUser.getUsername();
         }
+
+      */
 
 
         logout = new Button("Log out " + currentUserName, e -> authenticatedUser.logout());

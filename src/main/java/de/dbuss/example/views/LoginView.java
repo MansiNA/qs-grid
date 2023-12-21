@@ -33,6 +33,7 @@ import java.util.Optional;
 public class LoginView extends LoginOverlay implements BeforeEnterObserver {
     UI ui = new UI();
     private static final String LOGIN_SUCCESS_URL = "/";
+    private static final String LOGIN_ERROR_URL = "/login";
     private final AuthenticatedUser authenticatedUser;
     private final UserService userService;
     private final LoginForm login = new LoginForm();
@@ -129,6 +130,8 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
             }
             else {
                 login.setError(true);
+                ui.getCurrent().getPage().setLocation(LOGIN_ERROR_URL);
+
             }
 
 

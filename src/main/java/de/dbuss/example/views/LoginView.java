@@ -19,6 +19,11 @@ import com.vaadin.flow.server.auth.AnonymousAllowed;
 import de.dbuss.example.data.entity.User;
 import de.dbuss.example.data.security.AuthenticatedUser;
 import de.dbuss.example.data.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
@@ -33,10 +38,13 @@ import java.util.Optional;
 public class LoginView extends LoginOverlay implements BeforeEnterObserver {
     UI ui = new UI();
     private static final String LOGIN_SUCCESS_URL = "/";
-    private static final String LOGIN_ERROR_URL = "/login";
+    private static final String LOGIN_ERROR_URL = "/simple_login";
     private final AuthenticatedUser authenticatedUser;
     private final UserService userService;
     private final LoginForm login = new LoginForm();
+
+    @Autowired
+    private AuthenticationProvider authenticationProvider;
 
     public LoginView(AuthenticatedUser authenticatedUser, UserService userService) {
         this.authenticatedUser = authenticatedUser;
@@ -100,7 +108,7 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
             //System.out.println("Still act like it was successful");
             //return true;
 
-            e.printStackTrace();
+            //e.printStackTrace();
             return false;
         }
 
@@ -125,6 +133,10 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
             if (isLoginSuccessful){
                 System.out.println("successfully login...");
 
+                //Authentication request = new UsernamePasswordAuthenticationToken("admin", "$2a$10$jpLNVNeA7Ar/ZQ2DKbKCm.MuT2ESe.Qop96jipKMq7RaUgCoQedV.");
+                Authentication request = new UsernamePasswordAuthenticationToken(userName, "$2a$10$jpLNVNeA7Ar/ZQ2DKbKCm.MuT2ESe.Qop96jipKMq7RaUgCoQedV.");
+                Authentication result = authenticationProvider.authenticate(request);
+                SecurityContextHolder.getContext().setAuthentication(result);
 
                 ui.getCurrent().getPage().setLocation(LOGIN_SUCCESS_URL);
             }

@@ -169,8 +169,7 @@ public class MainLayout extends AppLayout {
     private void createDrawer() {
 
         RouterLink gridView = new RouterLink ("grid", GridView.class);
-        RouterLink link = new RouterLink("simple_login", LoginView.class);
-        Button linkLoginAd = new Button("login with ad", e -> navigateTo("/login"));
+        RouterLink link = new RouterLink("login", LoginView.class);
 
         Optional<User> maybeUser = authenticatedUser.get();
         if (maybeUser.isPresent()) {
@@ -182,7 +181,7 @@ public class MainLayout extends AppLayout {
 
         } else
         {
-            addToDrawer(new VerticalLayout(link, linkLoginAd));
+            addToDrawer(new VerticalLayout(link));
         }
     }
     private void navigateTo(String path) {

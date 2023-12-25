@@ -2,6 +2,7 @@ package de.dbuss.example.data.security;
 
 import com.vaadin.flow.spring.security.VaadinWebSecurity;
 import de.dbuss.example.views.LoginView;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -33,6 +34,8 @@ public class SecurityConfig extends VaadinWebSecurity {
         return new BCryptPasswordEncoder();
     }
 
+
+
     @Component
     public class CustomAuthenticationProvider implements AuthenticationProvider {
 
@@ -45,6 +48,12 @@ public class SecurityConfig extends VaadinWebSecurity {
             String password = authentication.getCredentials().toString();
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            if(!passwordEncoder().matches(password,userDetails.getPassword()))
+            {
+                System.out.println("Falsches Passwort!");
+                return null;
+            }
 
             return new UsernamePasswordAuthenticationToken(userDetails, password, userDetails.getAuthorities());
 

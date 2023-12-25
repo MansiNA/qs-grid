@@ -135,7 +135,7 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
 
                 //Authentication request = new UsernamePasswordAuthenticationToken("admin", "$2a$10$jpLNVNeA7Ar/ZQ2DKbKCm.MuT2ESe.Qop96jipKMq7RaUgCoQedV.");
                 //Authentication request = new UsernamePasswordAuthenticationToken(userName, "$2a$10$jpLNVNeA7Ar/ZQ2DKbKCm.MuT2ESe.Qop96jipKMq7RaUgCoQedV.");
-                Authentication request = new UsernamePasswordAuthenticationToken(userName, "");
+                Authentication request = new UsernamePasswordAuthenticationToken(userName, "$2a$10$jpLNVNeA7Ar/ZQ2DKbKCm.MuT2ESe.Qop96jipKMq7RaUgCoQedV.");
                 Authentication result = authenticationProvider.authenticate(request);
                 SecurityContextHolder.getContext().setAuthentication(result);
 
@@ -151,11 +151,12 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
 
         } else {
 
-            System.out.println(user.getName() + " normal User...");
-            Optional<User> optionalUser = authenticatedUser.get();
-            if(optionalUser.isPresent()) {
-                isLoginSuccessful = true;
-            }
+            System.out.println(user.getName() + " kein AD-User...");
+        //    Optional<User> optionalUser = authenticatedUser.get();
+        //    if(optionalUser.isPresent()) {
+        //        System.out.println("User is successfully authenticated by spring security");
+        //        isLoginSuccessful = true;
+        //    }
         }
         // Show success or failure message
         if (isLoginSuccessful) {

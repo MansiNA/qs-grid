@@ -32,16 +32,15 @@ import javax.naming.directory.InitialDirContext;
 import java.util.Hashtable;
 import java.util.Optional;
 
-@Route("simple_login")
+@Route("login")
 @PageTitle("Login | Qs-Admin")
 @AnonymousAllowed
-public class LoginView extends LoginOverlay implements BeforeEnterObserver {
+//public class LoginView extends LoginOverlay implements BeforeEnterObserver {
+public class LoginView extends VerticalLayout  implements BeforeEnterObserver {
     UI ui = new UI();
-    private static final String LOGIN_SUCCESS_URL = "/";
-    private static final String LOGIN_ERROR_URL = "/simple_login";
     private final AuthenticatedUser authenticatedUser;
     private final UserService userService;
-    private final LoginForm login = new LoginForm();
+    private final LoginForm login = new LoginForm();;
 
     @Autowired
     private AuthenticationProvider authenticationProvider;
@@ -49,22 +48,77 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
     public LoginView(AuthenticatedUser authenticatedUser, UserService userService) {
         this.authenticatedUser = authenticatedUser;
         this.userService = userService;
+       // setAction(RouteUtil.getRoutePath(VaadinService.getCurrent().getContext(), getClass()));
 
-        setAction(RouteUtil.getRoutePath(VaadinService.getCurrent().getContext(), getClass()));
 
-        LoginI18n i18n = LoginI18n.createDefault();
-        i18n.setHeader(new LoginI18n.Header());
-        i18n.getHeader().setTitle("QS Grid...");
-        i18n.getHeader().setDescription("Login using mapping/mapping");
-        i18n.setAdditionalInformation(null);
-        setI18n(i18n);
+        login.setForgotPasswordButtonVisible(false);
 
-        setForgotPasswordButtonVisible(false);
-        setOpened(true);
-        // Add a listener to handle login events
-        addLoginListener(this::onLogin);
+        login.addLoginListener(e -> {
+            //System.out.println("Im Login-Listener...");
+            if (authenticate(e.getUsername(), e.getPassword())) {
+                login.setError(false);
+                login.getUI().ifPresent(ui -> ui.navigate("/"));
+
+            } else {
+                login.setError(true);
+            }
+        });
+
+        add(login);
 
     }
+
+    private boolean authenticate(String username, String password) {
+
+        System.out.println("Authentifiziere User: " + username + " / " + password);
+
+        User user = userService.getUserByUsername(username);
+
+        if (user == null)
+        {
+            System.out.println("User " + username + " not found in table application_user!!!");
+            return false;
+        }
+
+
+        Authentication result;
+
+        if(user.getIs_ad() == 1) {
+
+            System.out.println(user.getName() + " ist Active Directory User...");
+
+            boolean isLoginSuccessful = false;
+            isLoginSuccessful = connectToLdap(username, password);
+
+            if (isLoginSuccessful) {
+                System.out.println("AD says successfully login...");
+
+                Authentication request = new UsernamePasswordAuthenticationToken(username, "admin");
+                result = authenticationProvider.authenticate(request);
+                SecurityContextHolder.getContext().setAuthentication(result);
+                return true;
+            }
+            return false;
+        }
+        else
+        {
+            Authentication request = new UsernamePasswordAuthenticationToken(username, password);
+            result = authenticationProvider.authenticate(request);
+        }
+
+
+        if (result != null)
+        {
+            SecurityContextHolder.getContext().setAuthentication(result);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+
+    }
+
     private boolean connectToLdap(String username, String password) {
         //String ldapUrl = "ldap://viaginterkom.de:389";
         //String ldapUrl = "ldap://fhhnet.stadt.hamburg.de:389";
@@ -94,10 +148,13 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
 
         try {
             // Attempt to create an initial context with the provided credentials
+
+            System.out.println("Aufruf InitialDirContext Start");
             DirContext context = new InitialDirContext(env);
 
             // Close the context after use
             context.close();
+            System.out.println("Aufruf InitialDirContext Ende");
 
             System.out.println("Check User against AD is successfully...");
 
@@ -112,58 +169,6 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
             return false;
         }
 
-    }
-    private void onLogin(AbstractLogin.LoginEvent event) {
-
-        String userName = event.getUsername();
-        String password = event.getPassword();
-
-        System.out.println("Anmeldeversuch von User:" + userName);
-        System.out.println("mit Passwort:" + password);
-
-        User user = userService.getUserByUsername(userName);
-        System.out.println(user.getName());
-        boolean isLoginSuccessful = false;
-        if(user.getIs_ad() == 1) {
-
-            System.out.println(user.getName() + " ist Active Directory User...");
-
-            isLoginSuccessful = connectToLdap(userName, password);
-
-            if (isLoginSuccessful){
-                System.out.println("successfully login...");
-
-                //Authentication request = new UsernamePasswordAuthenticationToken("admin", "$2a$10$jpLNVNeA7Ar/ZQ2DKbKCm.MuT2ESe.Qop96jipKMq7RaUgCoQedV.");
-                //Authentication request = new UsernamePasswordAuthenticationToken(userName, "$2a$10$jpLNVNeA7Ar/ZQ2DKbKCm.MuT2ESe.Qop96jipKMq7RaUgCoQedV.");
-                Authentication request = new UsernamePasswordAuthenticationToken(userName, "$2a$10$jpLNVNeA7Ar/ZQ2DKbKCm.MuT2ESe.Qop96jipKMq7RaUgCoQedV.");
-                Authentication result = authenticationProvider.authenticate(request);
-                SecurityContextHolder.getContext().setAuthentication(result);
-
-                ui.getCurrent().getPage().setLocation(LOGIN_SUCCESS_URL);
-            }
-            else {
-                login.setError(true);
-                ui.getCurrent().getPage().setLocation(LOGIN_ERROR_URL);
-
-            }
-
-
-
-        } else {
-
-            System.out.println(user.getName() + " kein AD-User...");
-        //    Optional<User> optionalUser = authenticatedUser.get();
-        //    if(optionalUser.isPresent()) {
-        //        System.out.println("User is successfully authenticated by spring security");
-        //        isLoginSuccessful = true;
-        //    }
-        }
-        // Show success or failure message
-        if (isLoginSuccessful) {
-            Notification.show("Login successful", 3000, Notification.Position.MIDDLE).addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-        } else {
-            Notification.show("Login failed. Please check your credentials.", 5000, Notification.Position.MIDDLE).addThemeVariants(NotificationVariant.LUMO_ERROR);
-        }
     }
 
     @Override

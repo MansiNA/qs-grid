@@ -53,7 +53,7 @@ public class SecurityConfig extends VaadinWebSecurity {
             {
                 System.out.println("Falsches Passwort!");
 
-                if(userDetails.getPassword().equals("xxx"))
+                if(userDetails.getPassword().equals("fake"))
                 {
                     return new UsernamePasswordAuthenticationToken(userDetails, password, userDetails.getAuthorities());
                 }

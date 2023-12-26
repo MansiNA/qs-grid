@@ -53,22 +53,26 @@ public class LoginView extends VerticalLayout  implements BeforeEnterObserver {
 
         login.setForgotPasswordButtonVisible(false);
 
-        login.addLoginListener(e -> {
+        login.setAction("login");
+
+      /*  login.addLoginListener(e -> {
             //System.out.println("Im Login-Listener...");
             if (authenticate(e.getUsername(), e.getPassword())) {
                 login.setError(false);
                 login.getUI().ifPresent(ui -> ui.navigate("/"));
 
+
             } else {
                 login.setError(true);
             }
-        });
+        });*/
+
 
         add(login);
 
     }
 
-    private boolean authenticate(String username, String password) {
+  /*  private boolean authenticate(String username, String password) {
 
         System.out.println("Authentifiziere User: " + username + " / " + password);
 
@@ -170,7 +174,7 @@ public class LoginView extends VerticalLayout  implements BeforeEnterObserver {
         }
 
     }
-
+*/
     @Override
     public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
 

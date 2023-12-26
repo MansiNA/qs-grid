@@ -34,7 +34,8 @@ import org.apache.commons.lang3.StringUtils;
 
 @PageTitle("Grid")
 @Route(value = "grid", layout = MainLayout.class)
-@AnonymousAllowed
+//@AnonymousAllowed
+@RolesAllowed({"OUTLOOK", "ADMIN", "FLIP"})
 //@RouteAlias(value = "", layout = MainLayout.class)
 public class GridView extends Div {
 

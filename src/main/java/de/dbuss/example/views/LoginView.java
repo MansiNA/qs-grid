@@ -38,16 +38,16 @@ import java.util.Optional;
 //public class LoginView extends LoginOverlay implements BeforeEnterObserver {
 public class LoginView extends VerticalLayout  implements BeforeEnterObserver {
     UI ui = new UI();
-    private final AuthenticatedUser authenticatedUser;
-    private final UserService userService;
+    //private final AuthenticatedUser authenticatedUser;
+    //private final UserService userService;
     private final LoginForm login = new LoginForm();;
 
     @Autowired
     private AuthenticationProvider authenticationProvider;
 
     public LoginView(AuthenticatedUser authenticatedUser, UserService userService) {
-        this.authenticatedUser = authenticatedUser;
-        this.userService = userService;
+    //    this.authenticatedUser = authenticatedUser;
+    //    this.userService = userService;
        // setAction(RouteUtil.getRoutePath(VaadinService.getCurrent().getContext(), getClass()));
 
 

@@ -104,11 +104,7 @@ public class SecurityConfig extends VaadinWebSecurity {
         }
 
 
-
-
-
-
-        @Override
+     //   @Override
         public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 
             System.out.println("Angemeldet bei Spring Security wird: " + authentication.getName());
@@ -129,8 +125,6 @@ public class SecurityConfig extends VaadinWebSecurity {
                 System.out.println("User " + username + " not found in table application_user!!!");
                 return null;
             }
-
-            Authentication result;
 
             if( user.getIs_ad() == 1) {
 
@@ -164,7 +158,7 @@ public class SecurityConfig extends VaadinWebSecurity {
 
         }
 
-        @Override
+     //   @Override
         public boolean supports(Class<?> authentication) {
             return authentication.equals(UsernamePasswordAuthenticationToken.class);
         }

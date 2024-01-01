@@ -204,10 +204,12 @@ public class GridView extends VerticalLayout {
         future.addCallback(
                 successResult -> {
                     decreaseThreadCount();
-                    updateUi(ui, "Task finished: " + successResult.getResult());
+                    updateUi(ui, "Task finished: SQL: " + successResult.getId() + " Ergebnis: "  + successResult.getResult());
+                    listOfProjectQs.remove(successResult);
+                    listOfProjectQs.add(successResult);
+                    grid.setItems(listOfProjectQs);
 
                 },
-
 
                 failureException -> {
                     decreaseThreadCount();

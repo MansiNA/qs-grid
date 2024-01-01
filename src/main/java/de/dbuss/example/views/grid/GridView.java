@@ -132,6 +132,7 @@ public class GridView extends VerticalLayout {
 
        Button startQSButton = new Button("Start QS", clickEvent -> {
            executeSQL(listOfProjectQs);
+           progressBar.setVisible(true);
        });
 
        threadCountField = new TextField("Anzahl der Threads");

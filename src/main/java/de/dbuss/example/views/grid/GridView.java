@@ -62,6 +62,7 @@ public class GridView extends VerticalLayout {
 
     private AtomicInteger threadCount = new AtomicInteger(0);
     private TextField threadCountField;
+    private BackendService backendService;
 
     private Grid<ProjectQSEntity> grid;
     private List<ProjectQSEntity> listOfProjectQs;
@@ -73,7 +74,7 @@ public class GridView extends VerticalLayout {
     private String dbPassword;
     private Map<Integer, List<Map<String, Object>>> rowsMap = new HashMap<>();
     @Getter
-    public int projectId=1;
+    public int projectId=9;
 
   /*  private GridPro<Client> grid;
     private GridListDataView<Client> gridListDataView;
@@ -85,7 +86,7 @@ public class GridView extends VerticalLayout {
    */
 
    public GridView(BackendService backendService, ProjectConnectionService projectConnectionService) {
-
+       this.backendService=backendService;
        this.projectConnectionService = projectConnectionService;
        this.jdbcTemplate = projectConnectionService.getJdbcDefaultConnection();
 
@@ -123,18 +124,34 @@ public class GridView extends VerticalLayout {
             Notification.show("UI isn't blocked!");
         });
 
+       Button startQSButton = new Button("Start QS", clickEvent -> {
+           executeSQL(listOfProjectQs);
+       });
+
        threadCountField = new TextField("Anzahl der Threads");
        threadCountField.setReadOnly(true); // Textfeld schreibgeschützt machen, um es nur lesbar zu machen
        updateThreadCountField();
 
-       add(startButton, progressBar, isBlockedButton, threadCountField);
+       add(startButton, progressBar, isBlockedButton, threadCountField, startQSButton);
 
 
        //QS-Grid aufbauen:
 
        getListOfProjectQsWithResult();
 
-       listOfProjectQs = getResultExecuteSQL(dbUrl, dbUser, dbPassword, listOfProjectQs);
+       //Parallel ausführen der SQL's:
+
+       for (ProjectQSEntity projectQS:listOfProjectQs) {
+           System.out.println("Ausführen SQL: " + projectQS.getSql() );
+
+       //    executeSQL(projectQS);
+
+       }
+
+
+//       listOfProjectQs = getResultExecuteSQL(dbUrl, dbUser, dbPassword, listOfProjectQs);
+
+
 
        grid = new Grid<>(ProjectQSEntity.class, false);
        grid.addColumn(ProjectQSEntity::getName).setHeader("QS-Name").setResizable(true);
@@ -171,6 +188,36 @@ public class GridView extends VerticalLayout {
        grid.setItems(listOfProjectQs);
 
        add(grid);
+
+    }
+
+    private void executeSQL(List<ProjectQSEntity> projectSqls) {
+
+        UI ui = getUI().orElseThrow();
+
+        for (ProjectQSEntity projectQS:projectSqls) {
+            System.out.println("Ausführen SQL: " + projectQS.getSql() );
+
+        increaseThreadCount();
+
+        //ListenableFuture<String> future = backendService.longRunningTask();
+
+            DataSource dataSource = getDataSourceUsingParameter(dbUrl, dbUser, dbPassword);
+            jdbcTemplate = new JdbcTemplate(dataSource);
+
+        ListenableFuture<ProjectQSEntity> future = backendService.getQsResult(jdbcTemplate,projectQS );
+        future.addCallback(
+                successResult -> {
+                    decreaseThreadCount();
+                    updateUi(ui, "Task finished: " + successResult.getResult());
+
+                },
+
+
+                failureException -> updateUi(ui, "Task failed: " + failureException.getMessage())
+
+        );
+        }
 
     }
 

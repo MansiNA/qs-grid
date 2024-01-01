@@ -8,6 +8,7 @@ import com.vaadin.flow.theme.Theme;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
  * The entry point of the Spring Boot application.
@@ -21,6 +22,8 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @PWA(name = "QS Admin Tool", shortName = "QS Admin", offlineResources = {})
 @NpmPackage(value = "line-awesome", version = "1.3.0")
 @ConfigurationPropertiesScan
+@Push
+@EnableAsync
 public class Application implements AppShellConfigurator {
 
     public static void main(String[] args) {

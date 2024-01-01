@@ -1,5 +1,7 @@
 package de.dbuss.example.views.grid;
 
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
@@ -11,8 +13,11 @@ import com.vaadin.flow.component.gridpro.GridPro;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.LocalDateRenderer;
@@ -28,16 +33,23 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.annotation.security.RolesAllowed;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.concurrent.ListenableFuture;
 
 @PageTitle("Grid")
 @Route(value = "grid", layout = MainLayout.class)
 //@AnonymousAllowed
 @RolesAllowed({"OUTLOOK", "ADMIN", "FLIP"})
 //@RouteAlias(value = "", layout = MainLayout.class)
-public class GridView extends Div {
+public class GridView extends VerticalLayout {
+
+    private ProgressBar progressBar = new ProgressBar();
+
+    private AtomicInteger threadCount = new AtomicInteger(0);
+    private TextField threadCountField;
 
     private GridPro<Client> grid;
     private GridListDataView<Client> gridListDataView;
@@ -46,11 +58,82 @@ public class GridView extends Div {
     private Grid.Column<Client> statusColumn;
     private Grid.Column<Client> dateColumn;
 
-    public GridView() {
+   public GridView(BackendService backendService) {
+
         addClassName("grid-view");
-        setSizeFull();
+  /*      setSizeFull();
         createGrid();
-        add(grid);
+        add(grid);*/
+
+       progressBar.setWidth("15em");
+       progressBar.setIndeterminate(true);
+       progressBar.setVisible(false);
+
+        Button startButton = new Button("Start QS background task", clickEvent -> {
+            UI ui = clickEvent.getSource().getUI().orElseThrow();
+
+            increaseThreadCount();
+
+            ListenableFuture<String> future = backendService.longRunningTask();
+            future.addCallback(
+                    successResult -> {
+                        decreaseThreadCount();
+                        updateUi(ui, "Task finished: " + successResult);
+
+                    },
+
+
+                    failureException -> updateUi(ui, "Task failed: " + failureException.getMessage())
+
+
+            );
+            progressBar.setVisible(true);
+        });
+
+        Button isBlockedButton = new Button("Is UI blocked?", clickEvent -> {
+            Notification.show("UI isn't blocked!");
+        });
+
+       threadCountField = new TextField("Anzahl der Threads");
+       threadCountField.setReadOnly(true); // Textfeld schreibgeschützt machen, um es nur lesbar zu machen
+       updateThreadCountField();
+
+       add(startButton, progressBar, isBlockedButton, threadCountField);
+
+    }
+
+    private void updateThreadCountField() {
+        int count = threadCount.get();
+        // Setze die Thread-Anzahl im Textfeld
+        threadCountField.setValue(String.valueOf(count));
+    }
+
+    private void updateUi(UI ui, String result) {
+        ui.access(() -> {
+            Notification.show(result);
+
+            updateThreadCountField();
+            int count = threadCount.get();
+            System.out.println("Anzahl Threads jetzt: " + count);
+            if (count == 0)
+            {
+                progressBar.setVisible(false);
+            }
+
+        });
+
+    }
+
+    private void increaseThreadCount() {
+        int count = threadCount.incrementAndGet();
+    //    Notification.show("Anzahl der Threads: " + count);
+        updateThreadCountField();
+    }
+
+    private void decreaseThreadCount() {
+        int count = threadCount.decrementAndGet();
+      //  Notification.show("Anzahl der Threads: " + count);
+        //System.out.println("in decreaseThreadCount count jetzt: " + count);
     }
 
     private void createGrid() {

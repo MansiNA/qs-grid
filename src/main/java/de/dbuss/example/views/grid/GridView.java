@@ -205,9 +205,6 @@ public class GridView extends VerticalLayout {
                 successResult -> {
                     decreaseThreadCount();
                     updateUi(ui, "Task finished: SQL: " + successResult.getId() + " Ergebnis: "  + successResult.getResult());
-                    listOfProjectQs.remove(successResult);
-                    listOfProjectQs.add(successResult);
-                    grid.setItems(listOfProjectQs);
 
                 },
 
@@ -342,6 +339,9 @@ public class GridView extends VerticalLayout {
             updateThreadCountField();
             int count = threadCount.get();
             System.out.println("Anzahl Threads jetzt: " + count);
+
+            grid.getDataProvider().refreshAll();
+
             if (count == 0)
             {
                 progressBar.setVisible(false);

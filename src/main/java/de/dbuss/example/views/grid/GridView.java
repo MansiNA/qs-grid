@@ -99,6 +99,7 @@ public class GridView extends VerticalLayout {
        progressBar.setIndeterminate(true);
        progressBar.setVisible(false);
 
+       /*
         Button startButton = new Button("Start QS background task", clickEvent -> {
             UI ui = clickEvent.getSource().getUI().orElseThrow();
 
@@ -113,12 +114,17 @@ public class GridView extends VerticalLayout {
                     },
 
 
-                    failureException -> updateUi(ui, "Task failed: " + failureException.getMessage())
+                    failureException -> {
+                        decreaseThreadCount();
+                        updateUi(ui, "Task failed: " + failureException.getMessage());
+                    }
 
 
             );
             progressBar.setVisible(true);
         });
+
+        */
 
         Button isBlockedButton = new Button("Is UI blocked?", clickEvent -> {
             Notification.show("UI isn't blocked!");
@@ -132,25 +138,13 @@ public class GridView extends VerticalLayout {
        threadCountField.setReadOnly(true); // Textfeld schreibgeschützt machen, um es nur lesbar zu machen
        updateThreadCountField();
 
-       add(startButton, progressBar, isBlockedButton, threadCountField, startQSButton);
+      // add(startButton, progressBar, isBlockedButton, threadCountField, startQSButton);
+       add(progressBar, isBlockedButton, threadCountField, startQSButton);
 
 
        //QS-Grid aufbauen:
 
        getListOfProjectQsWithResult();
-
-       //Parallel ausführen der SQL's:
-
-       for (ProjectQSEntity projectQS:listOfProjectQs) {
-           System.out.println("Ausführen SQL: " + projectQS.getSql() );
-
-       //    executeSQL(projectQS);
-
-       }
-
-
-//       listOfProjectQs = getResultExecuteSQL(dbUrl, dbUser, dbPassword, listOfProjectQs);
-
 
 
        grid = new Grid<>(ProjectQSEntity.class, false);
@@ -214,46 +208,16 @@ public class GridView extends VerticalLayout {
                 },
 
 
-                failureException -> updateUi(ui, "Task failed: " + failureException.getMessage())
+                failureException -> {
+                    decreaseThreadCount();
+                    updateUi(ui, "Task failed: " + failureException.getMessage());
+                }
 
         );
         }
 
     }
 
-    public List<ProjectQSEntity> getResultExecuteSQL(String dbUrl, String dbUser, String dbPassword, List<ProjectQSEntity> listOfProjectQs) {
-        for (ProjectQSEntity projectQSEntity : listOfProjectQs) {
-            String sql = projectQSEntity.getSql();
-
-            if(sql != null ) {
-                try {
-                    if(sql.contains("UPLOAD_ID")) {
-                        sql = sql.replace("UPLOAD_ID", uploadId + "");
-                        System.out.println(sql+"++++++++++++++++++++++++++++++++++++++");
-                    }
-
-                    DataSource dataSource = getDataSourceUsingParameter(dbUrl, dbUser, dbPassword);
-                    jdbcTemplate = new JdbcTemplate(dataSource);
-                    List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
-
-                    if (rows.isEmpty()) {
-                        projectQSEntity.setResult(Constants.OK);
-                    } else {
-                        rowsMap.put(projectQSEntity.getId(), rows);
-                        projectQSEntity.setResult(Constants.FAILED);
-                    }
-
-                } catch ( Exception e) {
-
-                    //   e.printStackTrace();
-                    String errormessage = handleDatabaseError(e);
-                    projectQSEntity.setResult(errormessage);
-                    //  Notification.show( "Error during execute " + errormessage,5000, Notification.Position.MIDDLE).addThemeVariants(NotificationVariant.LUMO_ERROR);
-                }
-            }
-        }
-        return listOfProjectQs;
-    }
 
     public DataSource getDataSourceUsingParameter(String dbUrl, String dbUser, String dbPassword) {
 
@@ -392,7 +356,7 @@ public class GridView extends VerticalLayout {
 
     private void decreaseThreadCount() {
         int count = threadCount.decrementAndGet();
-      //  Notification.show("Anzahl der Threads: " + count);
+       // Notification.show("Anzahl der Threads: " + count);
         //System.out.println("in decreaseThreadCount count jetzt: " + count);
        }
 

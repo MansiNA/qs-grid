@@ -13,6 +13,8 @@ import com.vaadin.flow.component.gridpro.GridPro;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -26,18 +28,28 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
+import de.dbuss.example.data.entity.Constants;
+import de.dbuss.example.data.entity.ProjectParameter;
+import de.dbuss.example.data.entity.ProjectQSEntity;
+import de.dbuss.example.data.entity.Projects;
+import de.dbuss.example.data.service.ProjectConnectionService;
 import de.dbuss.example.views.MainLayout;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.annotation.security.RolesAllowed;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.util.concurrent.ListenableFuture;
+
+import javax.sql.DataSource;
 
 @PageTitle("Grid")
 @Route(value = "grid", layout = MainLayout.class)
@@ -51,14 +63,31 @@ public class GridView extends VerticalLayout {
     private AtomicInteger threadCount = new AtomicInteger(0);
     private TextField threadCountField;
 
-    private GridPro<Client> grid;
+    private Grid<ProjectQSEntity> grid;
+    private List<ProjectQSEntity> listOfProjectQs;
+    private int uploadId;
+    private ProjectConnectionService projectConnectionService;
+    private JdbcTemplate jdbcTemplate;
+    private String dbUrl;
+    private String dbUser;
+    private String dbPassword;
+    private Map<Integer, List<Map<String, Object>>> rowsMap = new HashMap<>();
+    @Getter
+    public int projectId=1;
+
+  /*  private GridPro<Client> grid;
     private GridListDataView<Client> gridListDataView;
     private Grid.Column<Client> clientColumn;
     private Grid.Column<Client> amountColumn;
     private Grid.Column<Client> statusColumn;
     private Grid.Column<Client> dateColumn;
 
-   public GridView(BackendService backendService) {
+   */
+
+   public GridView(BackendService backendService, ProjectConnectionService projectConnectionService) {
+
+       this.projectConnectionService = projectConnectionService;
+       this.jdbcTemplate = projectConnectionService.getJdbcDefaultConnection();
 
         addClassName("grid-view");
   /*      setSizeFull();
@@ -100,8 +129,192 @@ public class GridView extends VerticalLayout {
 
        add(startButton, progressBar, isBlockedButton, threadCountField);
 
+
+       //QS-Grid aufbauen:
+
+       getListOfProjectQsWithResult();
+
+       listOfProjectQs = getResultExecuteSQL(dbUrl, dbUser, dbPassword, listOfProjectQs);
+
+       grid = new Grid<>(ProjectQSEntity.class, false);
+       grid.addColumn(ProjectQSEntity::getName).setHeader("QS-Name").setResizable(true);
+       grid.addComponentColumn(projectQs -> {
+
+           HorizontalLayout layout = new HorizontalLayout();
+           Icon icon = new Icon();
+           String status = projectQs.getResult();
+
+           if (Constants.FAILED.equals(status)) {
+               icon = VaadinIcon.CLOSE_CIRCLE.create();
+               icon.getElement().getThemeList().add("badge error");
+               layout.add(icon);
+           } else if (Constants.OK.equals(status)) {
+               icon = VaadinIcon.CHECK.create();
+               icon.getElement().getThemeList().add("badge success");
+               layout.add(icon);
+           } else {
+               icon = VaadinIcon.SPINNER.create();
+               icon.getElement().getThemeList().add("badge spinner");
+               if(status == null) {
+                   status = "before execute...";
+               }
+               layout.add(status);
+               System.out.println(status);
+           }
+           icon.getStyle().set("padding", "var(--lumo-space-xs");
+
+           return layout;
+
+       }).setHeader("Result").setFlexGrow(0).setWidth("300px").setResizable(true);
+
+
+       grid.setItems(listOfProjectQs);
+
+       add(grid);
+
     }
 
+    public List<ProjectQSEntity> getResultExecuteSQL(String dbUrl, String dbUser, String dbPassword, List<ProjectQSEntity> listOfProjectQs) {
+        for (ProjectQSEntity projectQSEntity : listOfProjectQs) {
+            String sql = projectQSEntity.getSql();
+
+            if(sql != null ) {
+                try {
+                    if(sql.contains("UPLOAD_ID")) {
+                        sql = sql.replace("UPLOAD_ID", uploadId + "");
+                        System.out.println(sql+"++++++++++++++++++++++++++++++++++++++");
+                    }
+
+                    DataSource dataSource = getDataSourceUsingParameter(dbUrl, dbUser, dbPassword);
+                    jdbcTemplate = new JdbcTemplate(dataSource);
+                    List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
+
+                    if (rows.isEmpty()) {
+                        projectQSEntity.setResult(Constants.OK);
+                    } else {
+                        rowsMap.put(projectQSEntity.getId(), rows);
+                        projectQSEntity.setResult(Constants.FAILED);
+                    }
+
+                } catch ( Exception e) {
+
+                    //   e.printStackTrace();
+                    String errormessage = handleDatabaseError(e);
+                    projectQSEntity.setResult(errormessage);
+                    //  Notification.show( "Error during execute " + errormessage,5000, Notification.Position.MIDDLE).addThemeVariants(NotificationVariant.LUMO_ERROR);
+                }
+            }
+        }
+        return listOfProjectQs;
+    }
+
+    public DataSource getDataSourceUsingParameter(String dbUrl, String dbUser, String dbPassword) {
+
+        if(dbUser != null) {
+            System.out.println(dbUrl);
+            System.out.println("Username = " + dbUser + " Password = " + dbPassword);
+            DataSource dataSource = DataSourceBuilder
+                    .create()
+                    .url(dbUrl)
+                    .username(dbUser)
+                    .password(dbPassword)
+                    .build();
+            return dataSource;
+        }
+
+        throw new RuntimeException("Database connection not found: " + dbUser);
+    }
+
+    public String handleDatabaseError(Exception e) {
+
+        if (e instanceof DataAccessException) {
+            Throwable rootCause = getRootCause(e);
+            if (rootCause instanceof org.springframework.jdbc.CannotGetJdbcConnectionException) {
+                return "Error: Cannot connect to the database. Check database configuration.";
+            } else if (rootCause instanceof org.springframework.jdbc.BadSqlGrammarException) {
+                return "Error: Table does not exist or SQL syntax error.";
+            } else {
+                e.printStackTrace();
+                if(e.getMessage().contains(";")) {
+                    String [] errorMessage = e.getMessage().split(";");
+                    return errorMessage[errorMessage.length - 1];
+                }
+                return "Database error: " + e.getMessage();
+            }
+        } else {
+            e.printStackTrace();
+            return "Unknown error: " + e.getMessage();
+        }
+    }
+
+    private Throwable getRootCause(Throwable throwable) {
+        Throwable cause = throwable.getCause();
+        if (cause == null) {
+            return throwable;
+        }
+        return getRootCause(cause);
+    }
+
+    private void getListOfProjectQsWithResult() {
+        String tableName = "project_qs";
+        listOfProjectQs = getProjectQSList(tableName);
+
+        String sql = "select pp.name, pp.value from pit.dbo.project_parameter pp, [PIT].[dbo].[projects] p\n" +
+                "  where pp.namespace=p.page_url\n" +
+                "  and pp.name in ('DB_Server','DB_Name', 'DB_User','DB_Password')\n" +
+                "  and p.id="+projectId ;
+
+        List<ProjectParameter> resultList = jdbcTemplate.query(sql, (rs, rowNum) -> {
+            ProjectParameter projectParameter = new ProjectParameter();
+            projectParameter.setName(rs.getString("name"));
+            projectParameter.setValue(rs.getString("value"));
+            return projectParameter;
+        });
+        String dbName = null;
+        String dbServer = null;
+        for (ProjectParameter projectParameter : resultList) {
+            if (Constants.DB_NAME.equals(projectParameter.getName())) {
+                dbName = projectParameter.getValue();
+            } else if (Constants.DB_USER.equals(projectParameter.getName())) {
+                dbUser = projectParameter.getValue();
+            } else if (Constants.DB_PASSWORD.equals(projectParameter.getName())) {
+                dbPassword = projectParameter.getValue();
+            } else if (Constants.DB_SERVER.equals(projectParameter.getName())) {
+                dbServer = projectParameter.getValue();
+            }
+        }
+        dbUrl = "jdbc:sqlserver://" + dbServer + ";databaseName=" + dbName + ";encrypt=true;trustServerCertificate=true";
+
+    }
+
+    public List<ProjectQSEntity> getProjectQSList(String tableName) {
+        try {
+            jdbcTemplate = projectConnectionService.getJdbcDefaultConnection();
+            String sqlQuery = "SELECT * FROM " + tableName + " WHERE [project_id] =" + projectId;
+
+            // Create a RowMapper to map the query result to a ProjectQSEntity object
+            RowMapper<ProjectQSEntity> rowMapper = (rs, rowNum) -> {
+                ProjectQSEntity projectQSEntity = new ProjectQSEntity();
+                projectQSEntity.setId(rs.getInt("id"));
+                projectQSEntity.setName(rs.getString("name"));
+                projectQSEntity.setSql(rs.getString("sql"));
+                projectQSEntity.setDescription(rs.getString("description"));
+                Projects projects = new Projects();
+                projects.setId(rs.getLong("project_id"));
+                projectQSEntity.setProject(projects);
+                projectQSEntity.setCreate_date(rs.getDate("create_date"));
+                return projectQSEntity;
+            };
+
+            List<ProjectQSEntity> fetchedData = jdbcTemplate.query(sqlQuery, rowMapper);
+
+            return fetchedData;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            String errorMessage = handleDatabaseError(ex);
+            return Collections.emptyList();
+        }
+    }
     private void updateThreadCountField() {
         int count = threadCount.get();
         // Setze die Thread-Anzahl im Textfeld
@@ -134,13 +347,15 @@ public class GridView extends VerticalLayout {
         int count = threadCount.decrementAndGet();
       //  Notification.show("Anzahl der Threads: " + count);
         //System.out.println("in decreaseThreadCount count jetzt: " + count);
-    }
+       }
 
+   /*
     private void createGrid() {
         createGridComponent();
         addColumnsToGrid();
         addFiltersToGrid();
     }
+
 
     private void createGridComponent() {
         grid = new GridPro<>();
@@ -286,4 +501,9 @@ public class GridView extends VerticalLayout {
 
         return c;
     }
+
+     */
+
+
+
 };

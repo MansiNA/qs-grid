@@ -1,5 +1,6 @@
 package de.dbuss.example.views.grid;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -166,12 +167,14 @@ public class GridView extends VerticalLayout {
                layout.add(icon);
            } else {
                icon = VaadinIcon.SPINNER.create();
+
                icon.getElement().getThemeList().add("badge spinner");
                if(status == null) {
                    status = "before execute...";
                }
-               layout.add(status);
-               System.out.println(status);
+               //layout.add(status);
+               layout.add(createIcon());
+             //  System.out.println(status);
            }
            icon.getStyle().set("padding", "var(--lumo-space-xs");
 
@@ -179,11 +182,20 @@ public class GridView extends VerticalLayout {
 
        }).setHeader("Result").setFlexGrow(0).setWidth("300px").setResizable(true);
 
-
        grid.setItems(listOfProjectQs);
 
        add(grid);
 
+    }
+
+    private Component createIcon() {
+        String imageUrl = "icons/spinner.gif";
+        Image image = new Image(imageUrl, "GIF Icon");
+        image.setWidth("20px");
+        image.setHeight("20px");
+
+        // Das Image-Objekt zurückgeben
+        return image;
     }
 
     private void executeSQL(List<ProjectQSEntity> projectSqls) {
